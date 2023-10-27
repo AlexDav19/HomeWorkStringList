@@ -1,20 +1,23 @@
 package org.example;
 
+import org.example.exceptions.ValidationIndexException;
+import org.example.exceptions.ValidationItemNullException;
+import org.example.exceptions.ValidationSizeException;
+
 import java.util.Objects;
 
-public class StringListReal implements StringList {
+public class StringListImpl implements StringList {
     String[] arr;
     private int size = 0;
 
-    StringListReal(int length) {
+    StringListImpl(int length) {
         arr = new String[length];
     }
 
     @Override
     public String add(String item) {
-        if (size >= arr.length) {
-            throw new RuntimeException();
-        }
+        validationSize();
+        validationItemNull(item);
         arr[size] = item;
         size++;
         return item;
@@ -22,9 +25,8 @@ public class StringListReal implements StringList {
 
     @Override
     public String add(int index, String item) {
-        if (size >= arr.length) {
-            throw new RuntimeException();
-        }
+        validationSize();
+        validationItemNull(item);
         if (index >= size) {
             arr[size] = item;
         } else {
@@ -39,9 +41,8 @@ public class StringListReal implements StringList {
 
     @Override
     public String set(int index, String item) {
-        if (size >= arr.length) {
-            throw new RuntimeException();
-        }
+        validationSize();
+        validationItemNull(item);
         if (index >= size) {
             arr[size] = item;
         } else {
@@ -55,28 +56,28 @@ public class StringListReal implements StringList {
     public String remove(String item) {
         for (int i = 0; i < size; i++) {
             if (Objects.equals(arr[i], item)) {
-                for (int j = i; j < size; j++) {
+                for (int j = i; j < size - i; j++) {
                     arr[i] = arr[i + 1];
                 }
                 size--;
+                arr[size] = null;
                 return item;
             }
         }
-        throw new RuntimeException();
+        throw new ValidationItemNullException();
     }
 
     @Override
     public String remove(int index) {
-        if (index >= size) {
-            throw new RuntimeException();
-        } else {
-            String unit = arr[index];
-            for (int i = index; i < size; i++) {
-                arr[i] = arr[i + 1];
-            }
-            size--;
-            return unit;
+        validationIndex(index);
+        String unit = arr[index];
+        for (int i = index; i < size; i++) {
+            arr[i] = arr[i + 1];
         }
+        size--;
+        arr[size] = null;
+        return unit;
+
     }
 
     @Override
@@ -111,15 +112,13 @@ public class StringListReal implements StringList {
 
     @Override
     public String get(int index) {
-        if (index >= size) {
-            throw new RuntimeException();
-        }
+        validationIndex(index);
         return arr[index];
     }
 
     @Override
     public boolean equals(StringList otherList) {
-        if (otherList.size() == 0) {
+        if (otherList.isEmpty()) {
             throw new RuntimeException();
         }
         if (size != otherList.size()) {
@@ -140,10 +139,7 @@ public class StringListReal implements StringList {
 
     @Override
     public boolean isEmpty() {
-        if (size == 0) {
-            return true;
-        }
-        return false;
+        return size == 0;
     }
 
     @Override
@@ -157,10 +153,33 @@ public class StringListReal implements StringList {
     @Override
     public String[] toArray() {
         String[] newList = new String[size];
-        for (int i = 0; i < size; i++) {
-            newList[i] = arr[i];
-        }
+        System.arraycopy(arr, 0, newList, 0, size);
         return newList;
     }
 
+    //Увеличить количество ячеек
+    public StringListImpl addNewPlace(int newLength) {
+        StringListImpl newArr = new StringListImpl(newLength);
+        System.arraycopy(arr, 0, newArr.arr, 0, 3);
+
+        return newArr;
+    }
+
+    public void validationSize() {
+        if (size >= arr.length) {
+            throw new ValidationSizeException("В массиве больше нет места");
+        }
+    }
+
+    public void validationIndex(int index) {
+        if (index >= size) {
+            throw new ValidationIndexException("Элемента с таким индексом нет");
+        }
+    }
+
+    public void validationItemNull(String item) {
+        if (item == null) {
+            throw new ValidationItemNullException("Не передано значение");
+        }
+    }
 }
